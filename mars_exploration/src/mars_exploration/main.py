@@ -14,6 +14,7 @@ from mars_exploration.crews.integration_crew import IntegrationCrew
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 class MarsExplorationFlow(Flow):
+    
     @start()
     def strategic_assessment(self):
         """
@@ -22,8 +23,6 @@ class MarsExplorationFlow(Flow):
         print("--- [Flow] Starting Strategic Planning (Mission Crew) ---")
         output = MissionCrew().crew().kickoff()
         return output
-    
-    ### ROUTER WHAT?
 
     @listen("rover_exploration")
     def run_rover_mission(self, assessment_data):
@@ -51,8 +50,25 @@ class MarsExplorationFlow(Flow):
         """
         print("--- [Flow] Finalizing Integration (Integration Crew) ---")
         # The Data Fusioner and Anomaly Detector agents process all gathered data
+        
+        # We will flag the status of the mission if all the scientific goals are completed or not
+        # If not, we can repeat the procces until doned. Using a router
         final_report = IntegrationCrew().crew().kickoff(inputs={"results": mission_results})
         return final_report
+    
+    @router(finalize_integration)
+    def replan(self):
+        #If self succes then finish
+        #Else again
+        return 0
+    
+    @listen("succes")
+    def succes(self):
+        return 0
+    
+    @listen("failed")
+    def failed(self):
+        return 0
 
 def run():
     """Run the Mars Exploration Flow."""

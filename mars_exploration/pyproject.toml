@@ -1,0 +1,23 @@
+[project]
+name = "mars_exploration"
+version = "0.1.0"
+description = "mars_exploration using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.165.1,<1.0.0"
+]
+
+[project.scripts]
+mars_exploration = "mars_exploration.main:run"
+run_crew = "mars_exploration.main:run"
+train = "mars_exploration.main:train"
+replay = "mars_exploration.main:replay"
+test = "mars_exploration.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

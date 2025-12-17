@@ -14,47 +14,37 @@ from mars_exploration.crews.integration_crew import IntegrationCrew
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 class MarsExplorationFlow(Flow):
-    
-    """
-    Implementation of the coordination and implementation preliminary revision.
-    This flow manages the lifecycle of the Mars exploration mission.
-    """
-    
     @start()
     def strategic_assessment(self):
         """
         Step 1: The Mission Crew performs strategic planning and hazard assessment.
         """
         print("--- [Flow] Starting Strategic Planning (Mission Crew) ---")
-        # In a real execution, 'inputs' would include the mission report
-        # The Hazard Assessment Agent determines the 'hazard_score'
         output = MissionCrew().crew().kickoff()
         return output
     
-    
     ### ROUTER WHAT?
 
-    @listen("standard_exploration")
-    def run_surface_mission(self, assessment_data):
-        """
-        Scenario A: Normal conditions. Drone and Rover crews coordinate for surface work.
-        """
+    @listen("rover_exploration")
+    def run_rover_mission(self, assessment_data):
         print("--- [Flow] Executing Surface Mission (Rover & Drone Crews) ---")
         # Coordination: Rover and Drone crews run asynchronously to maximize efficiency
         rover_task = RoverCrew().crew().kickoff_async(inputs=assessment_data)
-        drone_task = DroneCrew().crew().kickoff_async(inputs=assessment_data)
        
-        return {"rover": rover_task, "drone": drone_task}
+        return ({"rover": rover_task})
 
-    @listen("orbital_priority")
+    @listen("satelite_exploration")
     def run_satellite_mission(self, assessment_data):
-        """
-        Scenario B: Dangerous surface conditions. Focus exclusively on orbital data.
-        """
         print("--- [Flow] Executing Orbital Mission (Satellite Crew) ---")
         return SatelliteCrew().crew().kickoff(inputs=assessment_data)
+    
+    @listen("drone_exploration")
+    def run_drone_mission(self, assessment_data):
+        drone_task = DroneCrew().crew().kickoff_async(inputs=assessment_data)
+        return  ({"drone": drone_task})
 
-    @listen(["run_surface_mission", "run_satellite_mission"])
+    #and
+    @listen(["run_rover_mission", "run_satellite_mission", "run_drone_mission"])
     def finalize_integration(self, mission_results):
         """
         Step 3: Integration Crew fuses data and resolves anomalies for the final report.

@@ -2,10 +2,25 @@
 name = "mars_exploration"
 version = "0.1.0"
 description = "mars_exploration using crewAI"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "POL PUJOL SANTAELLA", email = "pol.pujol@estudiants.urv.cat"},
+           { name = "NAZIM ALPEREN AKCAKAYA", email = "nazimalperen.akcakaya@estudiants.urv.cat"},
+           { name = "ANTONIO IGLESIAS CARRIÓN", email = "antonio.iglesiasc@estudiants.urv.cat"},
+           { name = "JEAN PHILIPPE LEMOINE ROMERO", email = "jeanphilippe.lemoine@urv.cat"},
+           { name = "XAVIER SÁNCHEZ BARCELÓ", email = "xavier.sanchezb@estudiants.urv.cat"}
+          ]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "crewai[tools]>=0.165.1,<1.0.0"
+    "crewai[tools]>=0.165.1,<1.0.0",
+    "duckduckgo-search",
+    "pandas",
+    "jupyterlab",
+    "networkx",
+    "matplotlib",
+    "scikit-learn",
+    "langtrace-python-sdk",
+    "deprecated",
+    "ipywidgets",
+    "nbconvert"
 ]
 
 [project.scripts]

@@ -5,11 +5,11 @@ from datetime import datetime
 from crewai.flow.flow import Flow, listen, start, router
 
 # Importing the 5 required crews based on your MAS design
-from mars_exploration.crews.mission_crew import MissionCrew
-from mars_exploration.crews.rover_crew import RoverCrew
-from mars_exploration.crews.drone_crew import DroneCrew
-from mars_exploration.crews.satelite_crew import SatelliteCrew
-from mars_exploration.crews.integration_crew import IntegrationCrew
+from mars_exploration.src.mars_exploration.crews.mission_crew.mission_crew import MissionCrew
+from mars_exploration.src.mars_exploration.crews.rover_crew.rover_crew import RoverCrew
+from mars_exploration.src.mars_exploration.crews.drone_crew.drone_crew import DroneCrew
+from mars_exploration.src.mars_exploration.crews.satelite_crew.satelite_crew import SatelliteCrew
+from mars_exploration.src.mars_exploration.crews.integration_crew.integration_crew import IntegrationCrew
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 

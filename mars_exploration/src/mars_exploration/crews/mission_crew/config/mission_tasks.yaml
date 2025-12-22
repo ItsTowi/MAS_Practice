@@ -1,0 +1,33 @@
+analyze_mission_report_task:
+  description: >
+    Read the file {mission_report_path}. Extract scientific objective,
+    operational constraints, priorities, and known hazards.
+  expected_output: >
+    A structured summary of the key data from the mission report.
+  agent: mission_planner
+
+assess_hazards_task:
+  description: >
+    Analyze the hazards mentioned in the report and classify them
+    according to the risk posed to the agents.
+  expected_output: >
+    List of restricted zones and safety recommendations.
+  agent: hazard_assessment
+
+
+prioritize_science_task:
+  description: >
+    Evaluate the scientific objective and assign them a value
+    based on the priorities defined in the report.
+  expected_output: >
+    Detailed ranking of objectives with scientific justification.
+  agent: scientific_target_evaluator
+
+synthesize_final_plan_task:
+  description: >
+    Combine risk analysis, resource optimization, and scientific priorities
+    into a single coherent master plan.
+  expected_output: >
+    A mission plan structures in Markdown to be used as input for the
+    Rover, Drone, and Satellite crews.
+  agent: decision_synthesizer

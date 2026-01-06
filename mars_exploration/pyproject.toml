@@ -28,7 +28,7 @@ mars_exploration = "mars_exploration.main:run"
 run_crew = "mars_exploration.main:run"
 train = "mars_exploration.main:train"
 replay = "mars_exploration.main:replay"
-test = "tests.test_mission_crew:test_mission"
+test = "mars_exploration.tests.test_mission_crew:test_mission"
 
 [build-system]
 requires = ["hatchling"]

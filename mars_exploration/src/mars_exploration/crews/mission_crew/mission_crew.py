@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from pathlib import Path
 
 
@@ -82,7 +85,8 @@ class MissionCrew():
     tasks_config = 'config/mission_tasks.yaml'
 
     def __init__(self, mission_report_path: str = None, terrain_data_path: str = None) -> None:
-        self.llm = 'ollama/qwen3:4b'
+        #self.llm = 'ollama/qwen3:4b'
+        self.llm = 'gemini/gemini-2.5-flash'
 
     @agent
     def mission_planner(self) -> Agent:

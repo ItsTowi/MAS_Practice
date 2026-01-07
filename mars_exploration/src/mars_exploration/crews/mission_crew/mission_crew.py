@@ -1,77 +1,57 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Optional
+from enum import Enum
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from pathlib import Path
+from mars_exploration.tools.markdown import MarkdownReaderTool
+from mars_exploration.tools.graphTool import GraphMLReaderTool
 
-
-## Pydantic Output Models
+# Represents what was extracted from the Markdown
 class MissionReportSummary(BaseModel):
-    mission_duration_sols: int = Field(description="Total mission duration in Martian sols")
-    primary_objectives: List[str] = Field(description="List of primary mission objectives")
-    operational_constraints: Dict[str, str] = Field(description="Key operational constraints")
-    communication_windows: List[str] = Field(description="Available communication windows")
-    known_hazards: List[str] = Field(description="Initially known hazards from the report")
+    objectives: List[Dict[str, str]] = Field(description="List of objectives with their location and terrain")
+    constraints: List[str] = Field(description="Key operational constraints")
+    priorities: Dict[str, List[str]] = Field(description="Priorities by level (High, Medium, Low)")
+    known_hazards: List[str] = Field(description="Initial hazards mentioned")
 
-
+# Risk assessment by the Hazard Agent
 class HazardZone(BaseModel):
-    zone_id: str = Field(description="ID for the hazard Zone")
-    hazard_type: str = Field(description="Type of hazard (dust_storm, radiation, cliff, etc.)")
-    risk_level: str = Field(description="Risk Level: low, medium, high, critical")
-    affected_nodes: List[str] = Field(description="List of node IDs affected by this hazard")
-    time_window: Optional[str] = Field(default=None, description="Time period when hazard is active")
-    recommendation: str = Field(description="Safety recommendation for affected areas")
+    node: str = Field(description="Node ID")
+    hazard_type: str = Field(description="Type of hazard (unstable, radiation, storm)")
+    risk_level: str = Field(description="Risk level")
 
 class HazardAssessmentOutput(BaseModel):
-    hazard_zones: List[HazardZone] = Field(description="Detailed list of all hazard zones")
-    safe_zones: List[str] = Field(description="List of verified safe node IDs")
-    restricted_nodes: List[str] = Field(description="Nodes that should be avoided")
-    emergency_protocols: Dict[str, str] = Field(description="Protocol per hazard type")
+    hazards: List[HazardZone]
+    restricted_nodes: List[str] = Field(description="Prohibited nodes")
 
-
-class ResourceAllocation(BaseModel):
-    resource_type: str = Field(description="Type of resource (energy, bandwidth, time)")
-    total_available: float = Field(description="Total amount available")
-    allocated_to_rovers: float = Field(description="Amount allocated to rovers")
-    allocated_to_drones: float = Field(description="Amount allocated to drones")
-    allocated_to_satellites: float = Field(description="Amount allocated to satellites")
-    buffer_reserve: float = Field(description="Reserve buffer for contingencies")
-
+# Optimized resources
 class ResourceOptimizationOutput(BaseModel):
-    allocations: List[ResourceAllocation] = Field(description="Resource allocation breakdown")
-    bottleneck_warnings: List[str] = Field(description="Identified potential bottlenecks")
-    optimization_recommendations: List[str] = Field(description="Recommendations to improve efficiency")
+    allocations: Dict[str, str] = Field(description="Energy/time allocation per agent type")
+    warnings: List[str] = Field(description="Potential bottlenecks")
 
-
-class ScientificObjective(BaseModel):
-    id: str = Field(description="Unique identifier for the objective")
-    name: str = Field(description="Name of the scientific objective")
-    priority: int = Field(description="Priority level (1-10, where 10 is highest)")
-    target_location: str = Field(description="Target location or node ID")
-    scientific_value: float = Field(description="Scientific value score (0-100)")
-    justification: str = Field(description="Reasoning for the priority assignment")
-
-
+# Refined scientific prioritization
 class ScientificPrioritizationOutput(BaseModel):
-    prioritized_objectives: List[ScientificObjective] = Field(description="Ranked scientific objectives")
-    high_value_targets: List[str] = Field(description="Top priority target locations")
-    backup_targets: List[str] = Field(description="Alternative targets if primary fails")
+    ranked_targets: List[str] = Field(description="Nodes ordered by actual scientific value")
+    justification: str
+
+class ActionStep(BaseModel):
+    unit: str = Field(description="Rover or Drone")
+    target_node: str
+    action: str
+    constraints: Optional[str] = None
 
 class MasterMissionPlan(BaseModel):
-    mission_summary: str = Field(description="Executive summary of the mission plan")
-    scientific_priorities: List[ScientificObjective] = Field(description="Final prioritized objectives")
-    hazard_zones: List[HazardZone] = Field(description="All identified hazard zones")
-    resource_allocations: List[ResourceAllocation] = Field(description="Final resource distribution")
-    restricted_areas: List[str] = Field(description="Areas to avoid")
-    safe_routes: List[str] = Field(description="Recommended safe paths/zones")
-    critical_constraints: List[str] = Field(description="Must-follow constraints")
-    contingency_plans: Dict[str, str] = Field(description="Backup plans for common scenarios")
-
+    mission_overview: str = Field(description="High-level summary of the mission")
+    final_targets: List[str] = Field(description="Ordered list of approved mission targets")
+    no_go_zones: List[str] = Field(description="List of restricted/hazardous nodes")
+    resource_plan: Dict[str, str] = Field(description="Resource allocation strategy")
+    action_plan: List[ActionStep] = Field(description="Sequential action steps for mission execution")
+    risk_notes: List[str] = Field(description="Key risks and mitigation strategies")
 
 
 @CrewBase
@@ -84,9 +64,11 @@ class MissionCrew():
     agents_config = 'config/mission_agent.yaml'
     tasks_config = 'config/mission_tasks.yaml'
 
-    def __init__(self, mission_report_path: str = None, terrain_data_path: str = None) -> None:
-        #self.llm = 'ollama/qwen3:4b'
-        self.llm = 'gemini/gemini-2.5-flash'
+    def __init__(self) -> None:
+        self.llm = 'ollama/qwen3:4b'
+        #self.llm = 'gemini/gemini-2.5-flash'
+        self.makdown_tool = MarkdownReaderTool()
+        self.graphml_tool = GraphMLReaderTool()
 
     @agent
     def mission_planner(self) -> Agent:
@@ -96,7 +78,9 @@ class MissionCrew():
         return Agent(
             config=self.agents_config['mission_planner'], 
             llm=self.llm,
-            verbose=True)
+            tools=[self.makdown_tool, self.graphml_tool],
+            verbose=False
+        )
     
     @agent
     def hazard_assessment(self) -> Agent:
@@ -105,8 +89,10 @@ class MissionCrew():
         """
         return Agent(
             config=self.agents_config['hazard_assessment'],
-            llm=self.llm, 
-            verbose=True)
+            llm=self.llm,
+            tools=[self.graphml_tool],
+            verbose=False
+        )
     
     @agent
     def resource_optimization(self) -> Agent:
@@ -116,7 +102,9 @@ class MissionCrew():
         return Agent(
             config=self.agents_config['resource_optimization'],
             llm=self.llm,
-            verbose=True)
+            tools=[self.makdown_tool, self.graphml_tool],
+            verbose=False
+        )
     
     @agent
     def scientific_target_evaluator(self) -> Agent:
@@ -126,7 +114,9 @@ class MissionCrew():
         return Agent(
             config=self.agents_config['scientific_target_evaluator'],
             llm=self.llm,
-            verbose=True)
+            tools=[self.makdown_tool, self.graphml_tool],
+            verbose=False
+        )
     
     @agent
     def decision_synthesizer(self) -> Agent:
@@ -136,45 +126,43 @@ class MissionCrew():
         return Agent(
             config=self.agents_config['decision_synthesizer'],
             llm=self.llm,
-            verbose=True)
+            verbose=False
+        )
     
 
     @task
     def analyze_mission_report_task(self) -> Task:
         return Task(
             config=self.tasks_config['analyze_mission_report_task'],
-            output_pydantic=MissionReportSummary)
+            output_pydantic=MissionReportSummary
+            )
+
     
     @task
     def assess_hazard_task(self) -> Task:
         return Task(
             config=self.tasks_config['assess_hazards_task'],
-            output_pydantic=HazardAssessmentOutput)
+            output_pydantic=HazardAssessmentOutput,
+        )
     
     @task
     def optimize_resources_task(self) -> Task:
         return Task(
             config=self.tasks_config['optimize_resources_task'],
-            output_pydantic=ResourceOptimizationOutput)
+            output_pydantic=ResourceOptimizationOutput,
+        )
     
     @task
     def prioritize_science_task(self) -> Task:
         return Task(
             config=self.tasks_config['prioritize_science_task'],
-            output_pydantic=ResourceOptimizationOutput)
+            output_pydantic=ScientificPrioritizationOutput
+        )
     
     @task
     def synthesize_final_plan_task(self) -> Task:
         return Task(
             config=self.tasks_config['synthesize_final_plan_task'],
-            output_pydantic=MasterMissionPlan,
-            output_file='outputs/structured_mission_plan.md'    ,
-            context=[
-                self.analyze_mission_report_task(),
-                self.assess_hazard_task(),
-                self.optimize_resources_task(),
-                self.prioritize_science_task()
-            ]
         )
     
     @crew

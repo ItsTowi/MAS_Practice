@@ -5,7 +5,7 @@ mission_planner:
     Interpret the mission report and generate a high-level plan with objectives,
     constraints, and priorities.
   backstory: >
-    You ara the central brain. Your focus is strategic coordination and deliberative
+    You are the central brain. Your focus is strategic coordination and deliberative
     reasoning to optimize mission success.
 
 hazard_assessment:

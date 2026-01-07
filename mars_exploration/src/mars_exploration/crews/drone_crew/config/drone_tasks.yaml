@@ -1,0 +1,48 @@
+analyze_mission_task:
+  description: >
+    Analyze the provided Mission Report in detail. 
+    Identify all scientific objectives related to drone surveys, photography, or data collection.
+    Extract specific environmental hazards (like dust storms or radiation zones) and their locations/sectors 
+    that could impact flight safety.
+    Ignore information strictly related to ground Rovers or Satellites unless it affects airspace.
+  expected_output: >
+    A structured list of drone-specific objectives and a list of hazardous zones/sectors to avoid.
+  agent: drone_mission_analyst
+
+generate_report_task:
+  description: >
+    Compile the final, validated flight plan into a comprehensive Markdown report.
+    The report should clearly state:
+    - Which drone is doing what.
+    - The specific route (path) for each drone.
+    - Estimated energy consumption (if calculated) or distance.
+    - Any safety warnings or deviations taken to avoid hazards.
+    The format must be professional and ready for the Integration Crew.
+  expected_output: >
+    A formatted Markdown file containing the final Drone Crew Mission Plan.
+  agent: drone_reporter
+
+plan_routes_task:
+  description: >
+    Based on the objectives extracted by the Analyst, use the available tools to:
+    1. Read the drone fleet data. Pay strict attention to the 'range' (maximum travel distance) and 'camera_resolution' of each drone.
+    2. Read the Mars Terrain Graph to calculate distances between nodes.
+    3. Assign drones to objectives strategically:
+       - CONSTRAINT: The total length of the calculated path MUST be less than or equal to the drone's 'range'. If a target is too far for a drone, do not assign it.
+       - OPTIMIZATION: If an objective requires detailed imaging (as per Mission Report), prioritize assigning drones with higher 'camera_resolution' (e.g., 20MP vs 12MP).
+       - EFFICIENCY: For general tasks, assign the closest drone to minimize 'range' usage.
+    4. Calculate the precise path (node sequence) for each assignment.
+  expected_output: >
+    A detailed flight plan including Drone ID, Start Node, Target Node, Calculated Distance, and the sequence of nodes.
+    Crucially, verify that 'Calculated Distance' <= 'Drone Range' for every assignment.
+  agent: drone_fleet_manager
+
+validate_safety_task:
+  description: >
+    Review the flight plan provided by the Fleet Manager.
+    Cross-reference every node in the proposed paths against the known hazards identified by the Analyst.
+    If a path goes through a hazard, modify it to bypass the danger or flag it as 'High Risk/Impossible'.
+    Ensure final paths do not violate any safety constraints.
+  expected_output: >
+    A certified safe flight plan with any necessary route corrections applied.
+  agent: drone_hazard_detection

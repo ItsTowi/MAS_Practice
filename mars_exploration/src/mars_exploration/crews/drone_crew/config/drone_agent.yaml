@@ -1,0 +1,27 @@
+drone_mission_analyst:
+    role: >
+
+    goal: >
+      Extract precise scientific objectives and specific environmental hazards relevant to drone operations from the mission report.
+    backstory: >
+    
+drone_reporter:
+    role: >
+
+    goal: >
+      Compile all validated flight data into a comprehensive and structured Markdown mission plan ready for final integration.
+    backstory: >
+
+drone_hazard_detection:
+    role: >
+
+    goal: >
+      Validate the proposed flight paths against known hazards and modify any route that breaks safety constraints to ensure a risk-free plan.
+    backstory: >
+
+drone_fleet_manager:
+    role: >
+
+    goal: >
+      Plan optimal flight paths by assigning available drones to their nearest targets using the terrain graph to minimize travel distance.
+    backstory: >

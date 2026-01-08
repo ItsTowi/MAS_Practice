@@ -1,1 +1,78 @@
-{"plan_name":"MarsHazardAssessment","approved_targets":["N12","N45","N78"],"no_go_zones":["N5","N90"],"action_sequence":[{"unit":"Rover","node":"N12","action":"Subsurface sampling","rationale":"Rocky terrain with stable geological structure for safe subsurface operations"},{"unit":"Rover","node":"N45","action":"Subsurface sampling","rationale":"Rocky terrain with stable geological structure for safe subsurface operations"},{"unit":"Rover","node":"N78","action":"Subsurface sampling","rationale":"Rocky terrain with stable geological structure for safe subsurface operations"}],"emergency_protocols":["If rover detects radiation spikes in sandy terrain (N90), immediately retreat to nearest rocky zone (N12/N45/N78)","If crater instability is detected (N5), activate emergency stabilization protocol and abort all operations"],"markdown_report":"## Mars Mission Hazard Assessment Report\n\n### Environmental Hazards Identified:\n- **Crater terrain (N5)**: Unstable ground with high risk of collapse\n- **Sandy terrain (N90)**: Loose soil causing radiation exposure and rover entrapment risks\n\n### No-Go Zones:\n- `N5` (Crater): High collapse risk\n- `N90` (Sandy): Radiation exposure hazard\n\n### Approved Targets for Operations:\n- `N12`, `N45`, `N78` (Rocky terrain): Stable for subsurface sampling\n\n### Action Sequence:\n1. **Rover** at `N12` - Subsurface sampling\n2. **Rover** at `N45` - Subsurface sampling\n3. **Rover** at `N78` - Subsurface sampling\n\n### Emergency Protocols:\n- Radiation spikes in sandy terrain (`N90`): Retreat to rocky zones\n- Crater instability (`N5`): Activate stabilization and abort operations"}
+# 🛰️ Mars Exploration Mission Plan
+
+**Mission ID:** `Nexus-2024`
+**Generated:** 2026-01-08 16:48 UTC
+
+---
+
+## ✅ Approved Target Nodes
+
+- **Node N90** approved for scientific operations.
+- **Node N12** approved for scientific operations.
+- **Node N45** approved for scientific operations.
+- **Node N78** approved for scientific operations.
+- **Node N22** approved for scientific operations.
+- **Node N23** approved for scientific operations.
+- **Node N5** approved for scientific operations.
+
+---
+
+## 🧭 Planned Action Sequence
+
+### Step 1
+- **Unit:** rover
+- **Target Node:** N90
+- **Task:** subsurface exploration
+- **Estimated Duration:** 30 minutes
+
+### Step 2
+- **Unit:** rover
+- **Target Node:** N12
+- **Task:** radiation analysis
+- **Estimated Duration:** 25 minutes
+
+### Step 3
+- **Unit:** rover
+- **Target Node:** N45
+- **Task:** subsurface exploration
+- **Estimated Duration:** 20 minutes
+
+### Step 4
+- **Unit:** rover
+- **Target Node:** N78
+- **Task:** radiation analysis
+- **Estimated Duration:** 25 minutes
+
+### Step 5
+- **Unit:** drone
+- **Target Node:** N22
+- **Task:** ice mapping
+- **Estimated Duration:** 30 minutes
+
+### Step 6
+- **Unit:** drone
+- **Target Node:** N23
+- **Task:** imagery collection
+- **Estimated Duration:** 20 minutes
+
+### Step 7
+- **Unit:** drone
+- **Target Node:** N5
+- **Task:** ice mapping
+- **Estimated Duration:** 25 minutes
+
+
+---
+
+## ⚠️ Identified Mission Risks
+
+- Rover energy critical at N90
+- Drone time limit exceeded at N22
+
+---
+
+## 📊 Mission Confidence Assessment
+
+**Overall Confidence Score:** `85.0/100`
+
+The mission plan demonstrates a high probability of success. Resource allocation, hazard avoidance, and scientific prioritization are well aligned with mission constraints.

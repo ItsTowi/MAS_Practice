@@ -1,52 +1,85 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from pydantic import BaseModel, Field, validator
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Literal
 from enum import Enum
 import os
 from pathlib import Path
-
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
 from mars_exploration.tools.markdown import MarkdownReaderTool
 from mars_exploration.tools.graphTool import GraphMLReaderTool
 
-# Pydantic Outputs
+class MissionObjective(BaseModel):
+    node_id: str
+    task: str
+    priority: str
+    science_value: int = Field(ge=1, le=10)
+    duration_min: int
+    allowed_units: List[str]
+
+class Constraint(BaseModel):
+    unit: str
+    type: str  # energy, time, communication, environment
+    limit: float
+    critical: float
+    recovery: str
+
+class Hazard(BaseModel):
+    node_id: str
+    type: str
+    severity: Literal["low", "medium", "high", "critical"]
+    mitigation: str
+
 class MissionReportSummary(BaseModel):
-    objectives: List[Dict[str, str]] = Field(description="List of objectives with node, task, and terrain.")
-    constraints: Dict[str, float] = Field(description="Operational limits (e.g., battery threshold, flight time).")
-    priorities: Dict[str, List[str]] = Field(description="High, Medium, and Low priority node lists.")
+    mission_id: str = Field(
+        default_factory=lambda: f"MARS-{datetime.now().strftime('%Y%m%d-%H%M')}"
+    )
+    objectives: List[MissionObjective]
+    constraints: List[Constraint]
+    total_duration_hours: float
 
 class HazardAssessmentOutput(BaseModel):
-    restricted_nodes: List[str] = Field(description="List of prohibited node IDs.")
-    hazard_details: Dict[str, str] = Field(description="Map of node ID to its hazard type (e.g., {'N88': 'radiation'})")
+    restricted_nodes: List[str]
+    hazards: List[Hazard]
+    safe_paths: List[List[str]]
 
-# Optimized resources
+class UnitPlan(BaseModel):
+    unit: str
+    assigned_nodes: List[str]
+    energy_used: float
+    time_used: float
+
 class ResourceOptimizationOutput(BaseModel):
-    allocation_strategy: str = Field(description="Strategic advice on energy and time management.")
-    bottlenecks: List[str] = Field(description="Potential risks regarding battery or mission duration.")
+    unit_plans: List[UnitPlan]
+    bottlenecks: List[str]
+    efficiency_score: float = Field(ge=0, le=100)
 
-# Refined scientific prioritization
+class RankedTarget(BaseModel):
+    node_id: str
+    score: float = Field(ge=0, le=10)
+    recommended_unit: str
+    reason: str
+
 class ScientificPrioritizationOutput(BaseModel):
-    ranked_targets: List[str] = Field(description="Final ordered list of nodes based on value vs safety.")
-    justification: str = Field(description="Reasoning for re-prioritizing or skipping certain nodes.")
+    ranked_targets: List[RankedTarget]
+    deferred: List[str]
 
-
-class ActionStep(BaseModel):
-    unit: str = Field(description="Rover, Drone, or Satellite")
-    node: str = Field(description="Target node ID")
-    action: str = Field(description="Specific task to perform (e.g., sample collection)")
-    rationale: str = Field(description="Brief explanation of why this action is prioritized.")
+class Action(BaseModel):
+    step: int
+    unit: str
+    node: str
+    task: str
+    duration_min: int
 
 class MasterMissionPlan(BaseModel):
-    plan_name: str
-    approved_targets: List[str]
-    no_go_zones: List[str]
-    action_sequence: List[ActionStep]
-    emergency_protocols: List[str]
-    markdown_report: str = Field(description="The full Markdown formatted report text")
-
+    mission_id: str
+    approved_nodes: List[str]
+    actions: List[Action]
+    risks: List[str]
+    confidence_score: float = Field(ge=0, le=100)
 
 @CrewBase
 class MissionCrew():

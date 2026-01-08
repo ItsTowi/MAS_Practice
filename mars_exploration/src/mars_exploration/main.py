@@ -21,8 +21,13 @@ class MarsExplorationFlow(Flow):
         Step 1: The Mission Crew performs strategic planning and hazard assessment.
         """
         print("--- [Flow] Starting Strategic Planning (Mission Crew) ---")
-        output = MissionCrew().crew().kickoff()
-        return output
+        output = MissionCrew().crew().kickoff(inputs={
+            "mission_report_path": "input/mission_report.md",
+            "terrain_graph_path": "input/mars_terrain.graphml"
+        })
+
+        self.state.strategic_plan = output.raw
+        return output.raw
 
     @listen("rover_exploration")
     def run_rover_mission(self, assessment_data):
@@ -74,7 +79,8 @@ def run():
     """Run the Mars Exploration Flow."""
     try:
         flow = MarsExplorationFlow()
-        flow.kickoff()
+        result = flow.kickoff()
+        print(result)
     except Exception as e:
         raise Exception(f"An error occurred while running the flow: {e}")
 
@@ -86,6 +92,7 @@ def train():
         flow.train(n_iterations=int(sys.argv[1]), filename=sys.argv[2])
     except Exception as e:
         raise Exception(f"An error occurred while training the flow: {e}")
+
 
 if __name__ == "__main__":
     run()

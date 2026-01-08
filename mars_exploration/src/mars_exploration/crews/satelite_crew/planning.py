@@ -1,140 +1,142 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict, List
+from pathlib import Path
 
-OUTPUT_DIR = Path("outputs")
-OUTPUT_DIR.mkdir(exist_ok=True)
+def _mars_exploration_root() -> Path:
+    return Path(__file__).resolve().parents[4]
+
+OUTPUT_DIR = _mars_exploration_root() / "outputs"
 
 
-def build_orbit_plan(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    hazards = ctx.get("hazards", {})
-    dust = hazards.get("dust_storm", {})
-    level = (dust.get("level") or "low").lower()
-
-    adjustments: List[Dict[str, Any]] = []
-    # Placeholder logic: in real version you'll use satellites.json + mission targets
-    if level in ("high", "critical"):
-        adjustments.append({
-            "satellite_id": "SAT-1",
-            "change_type": "prioritize_comms",
-            "rationale": "High dust storm: imaging quality reduced, prioritize comm relay and wide-area monitoring."
-        })
-    else:
-        adjustments.append({
-            "satellite_id": "SAT-1",
-            "change_type": "retask_imaging",
-            "rationale": "No severe dust storm: proceed with planned high-resolution imaging for priority regions."
-        })
-
+def build_orbit_plan(mission: Dict[str, Any]) -> Dict[str, Any]:
+    # Deterministic placeholder: could later use satellites.json
     return {
-        "adjustments": adjustments,
-        "coverage_notes": ["Placeholder coverage assumptions (Task 2/early Task 3)."],
+        "adjustments": [
+            {
+                "satellite_id": "SAT-1",
+                "change_type": "coverage_schedule",
+                "rationale": "Cover approved target nodes and align imaging with planned action sequence.",
+            }
+        ],
+        "coverage_notes": [
+            f"Approved nodes count: {len(mission.get('approved_nodes', []))}",
+            "Orbit plan is a placeholder schedule (can be refined with real orbital mechanics later).",
+        ],
         "constraints": [],
     }
 
 
-def build_imaging_plan(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    objectives = ctx.get("objectives", [])
-    priorities = ctx.get("priorities", {})
-
+def build_imaging_plan(mission: Dict[str, Any]) -> Dict[str, Any]:
+    nodes = mission.get("approved_nodes", [])
     requests: List[Dict[str, Any]] = []
-    requests.append({
-        "target_id": "IMG-001",
-        "node_or_region": "region_A",
-        "reason": "High-priority mapping for terrain assessment and scientific context.",
-        "priority": 1,
-    })
-    requests.append({
-        "target_id": "IMG-002",
-        "node_or_region": "region_B",
-        "reason": "Support rover/drone planning with updated surface imagery.",
-        "priority": 2,
-    })
-    requests.append({
-        "target_id": "IMG-003",
-        "node_or_region": "region_C",
-        "reason": "Monitor hazards evolution (e.g., dust storm boundaries).",
-        "priority": 2,
-    })
+
+    # Prioritize first 3-6 approved nodes for imaging
+    for i, node in enumerate(nodes[:6], start=1):
+        requests.append({
+            "target_id": f"IMG-{i:03d}",
+            "node_or_region": node,
+            "reason": "High-resolution imaging for scientific operations support.",
+            "priority": 1 if i <= 3 else 2,
+        })
+
+    if not requests:
+        # fallback
+        requests.append({
+            "target_id": "IMG-001",
+            "node_or_region": "unknown",
+            "reason": "No approved nodes found in mission_plan.md; imaging plan uses placeholder target.",
+            "priority": 3,
+        })
 
     return {
         "requests": requests,
         "assumptions": [
-            "Targets are placeholders until Mission Crew provides explicit target nodes/regions."
+            "Imaging requests derived from 'Approved Target Nodes' in mission_plan.md."
         ],
-        "notes": [
-            f"Derived from objectives={len(objectives)} and priorities keys={list(priorities.keys())}."
-        ],
+        "notes": [],
     }
 
 
-def build_communication_plan(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    constraints = ctx.get("constraints", {})
-    min_windows = int(constraints.get("min_comm_windows", 3) or 3)
-
+def build_communication_plan(mission: Dict[str, Any]) -> Dict[str, Any]:
+    steps = mission.get("steps", [])
     windows: List[Dict[str, Any]] = []
-    for i in range(min_windows):
-        windows.append({
-            "window_id": f"COM-{i+1:03d}",
-            "start": f"SOL+{i} 10:00",
-            "end": f"SOL+{i} 10:15",
-            "link": "satellite->earth",
-        })
 
+    # 1) Earth downlink windows (at least 2)
     windows.append({
-        "window_id": "COM-RELAY-001",
-        "start": "SOL+0 12:00",
-        "end": "SOL+0 12:10",
-        "link": "satellite->asset:generic",
+        "window_id": "COM-EARTH-001",
+        "start": "SOL+0 09:00",
+        "end": "SOL+0 09:15",
+        "link": "satellite->earth",
     })
+    windows.append({
+        "window_id": "COM-EARTH-002",
+        "start": "SOL+0 18:00",
+        "end": "SOL+0 18:15",
+        "link": "satellite->earth",
+    })
+
+    # 2) Relay windows based on planned steps (generic asset ids)
+    for idx, s in enumerate(steps[:5], start=1):
+        unit = s.get("unit", "asset")
+        node = s.get("target_node", "unknown")
+        windows.append({
+            "window_id": f"COM-RELAY-{idx:03d}",
+            "start": f"SOL+0 {10+idx:02d}:00",
+            "end": f"SOL+0 {10+idx:02d}:10",
+            "link": f"satellite->{unit}:{node}",
+        })
 
     return {
         "windows": windows,
-        "bandwidth_notes": [
-            f"max_downlink_per_sol={constraints.get('max_downlink_per_sol', 'unknown')}"
-        ],
-        "contingency": [
-            "If a comm window is missed, queue high-priority science packets for the next available window."
-        ],
+        "bandwidth_notes": ["Placeholder windows; can be tied to real satellite comm windows later."],
+        "contingency": ["If a relay window is missed, queue high-priority science data for the next downlink."],
     }
 
 
-def build_environment_report(ctx: Dict[str, Any]) -> Dict[str, Any]:
-    hazards = ctx.get("hazards", {})
+def build_environment_report(mission: Dict[str, Any]) -> Dict[str, Any]:
+    risks = mission.get("risks", [])
+    hazards: List[Dict[str, Any]] = []
 
-    hazard_list: List[Dict[str, Any]] = []
-    for hazard_type, info in hazards.items():
-        level = (info.get("level") or "low").lower()
-        area = info.get("area") or "unknown"
-        confidence = 0.7 if level in ("medium", "high", "critical") else 0.5
+    # Minimal mapping: infer hazards from risk text
+    for r in risks:
+        r_low = r.lower()
+        if "dust" in r_low:
+            hazards.append({
+                "hazard_type": "dust_storm",
+                "severity": "high",
+                "affected_area": "unknown",
+                "confidence": 0.6,
+                "recommended_action": "Prioritize comm relay and monitoring; reduce high-res imaging if visibility drops.",
+            })
+        elif "energy" in r_low:
+            hazards.append({
+                "hazard_type": "energy_risk",
+                "severity": "high",
+                "affected_area": "node-specific",
+                "confidence": 0.7,
+                "recommended_action": "Prioritize near-term downlink of critical data; coordinate with rover scheduling.",
+            })
+        elif "time limit" in r_low or "time" in r_low:
+            hazards.append({
+                "hazard_type": "schedule_risk",
+                "severity": "medium",
+                "affected_area": "node-specific",
+                "confidence": 0.6,
+                "recommended_action": "Consider reducing imaging workload and focus on comm windows for progress updates.",
+            })
 
-        recommended = "Continue nominal ops"
-        if level in ("high", "critical"):
-            recommended = "Increase monitoring and prioritize comm relay; reduce high-res imaging if visibility is low."
-
-        hazard_list.append({
-            "hazard_type": hazard_type,
-            "severity": level if level in ("low", "medium", "high", "critical") else "low",
-            "affected_area": area,
-            "confidence": confidence,
-            "recommended_action": recommended,
-        })
-
-    summary = "Environmental hazards summarized from mission context (placeholder until orbital sensors are integrated)."
-    return {"hazards": hazard_list, "summary": summary}
+    summary = "Environment and operational risks inferred from 'Identified Mission Risks' section."
+    return {"hazards": hazards, "summary": summary}
 
 
-def export_artifacts(plan: Dict[str, Any]) -> Dict[str, str]:
+def export_markdown(plan: Dict[str, Any]) -> str:
     """
-    Writes JSON + MD artifacts for easy demo/testing.
-    Returns artifact paths to include in Integration Crew input.
+    Writes ONLY Markdown to mars_exploration/outputs/satellite_plan.md
+    Returns the markdown text (also useful to return to Integration Crew).
     """
-    json_path = OUTPUT_DIR / "satellite_plan.json"
     md_path = OUTPUT_DIR / "satellite_plan.md"
-
-    json_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
 
     md_lines: List[str] = []
     md_lines.append("# Satellite Crew Plan\n\n")
@@ -151,13 +153,13 @@ def export_artifacts(plan: Dict[str, Any]) -> Dict[str, str]:
     for w in plan["communications"]["windows"]:
         md_lines.append(f"- **{w['window_id']}** {w['start']} → {w['end']} ({w['link']})\n")
 
-    md_lines.append("\n## Environment / Hazards\n")
+    md_lines.append("\n## Environment / Risks\n")
     md_lines.append(plan["environment"]["summary"] + "\n")
     for h in plan["environment"]["hazards"]:
         md_lines.append(
-            f"- **{h['hazard_type']}** ({h['severity']}) in {h['affected_area']}, conf={h['confidence']}: {h['recommended_action']}\n"
+            f"- **{h['hazard_type']}** ({h['severity']}) area={h['affected_area']} conf={h['confidence']}: {h['recommended_action']}\n"
         )
 
-    md_path.write_text("".join(md_lines), encoding="utf-8")
-
-    return {"json": str(json_path), "md": str(md_path)}
+    md_text = "".join(md_lines)
+    md_path.write_text(md_text, encoding="utf-8")
+    return md_text

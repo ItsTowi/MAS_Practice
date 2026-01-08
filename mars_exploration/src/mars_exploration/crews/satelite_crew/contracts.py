@@ -1,60 +1,39 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Tuple
+from pathlib import Path
+from typing import Any, Dict
+from pathlib import Path
 
+def _mars_exploration_root() -> Path:
+    # contracts.py is at:
+    # mars_exploration/src/mars_exploration/crews/satelite_crew/contracts.py
+    # root we want:
+    # mars_exploration/
+    return Path(__file__).resolve().parents[4]
 
-def extract_mission_context(inputs: Dict[str, Any]) -> Dict[str, Any]:
+def extract_mission_plan_text(inputs: Dict[str, Any]) -> str:
     """
-    Accepts either:
-      A) inputs = {"mission_context": {...}}
-      B) inputs = {...}  (mission_context already flattened)
-    Returns a normalized context with stable keys and safe defaults.
+    Expected inputs:
+      {"mission_plan_md": "<markdown>"} OR
+      {"mission_plan_path": "outputs/mission_plan.md"} (relative to mars_exploration/) OR
+      {"mission_plan_path": "C:/.../mission_plan.md"} (absolute)
     """
-    ctx = inputs.get("mission_context", inputs) if isinstance(inputs, dict) else {}
+    if not isinstance(inputs, dict):
+        return ""
 
-    objectives = ctx.get("objectives", []) or []
-    priorities = ctx.get("priorities", {}) or {}
-    constraints = ctx.get("constraints", {}) or {}
-    hazards = ctx.get("hazards", {}) or {}
+    if "mission_plan_md" in inputs and isinstance(inputs["mission_plan_md"], str):
+        return inputs["mission_plan_md"]
 
-    return {
-        "objectives": objectives,
-        "priorities": priorities,
-        "constraints": constraints,
-        "hazards": hazards,
-    }
+    path = inputs.get("mission_plan_path")
+    if path is not None:
+        p = Path(path)
 
+        # If relative, resolve from mars_exploration/ root
+        if not p.is_absolute():
+            p = _mars_exploration_root() / p
 
-def satellite_output_contract(plan: Dict[str, Any], artifacts: Dict[str, str] | None = None) -> Dict[str, Any]:
-    """
-    Standard output for Integration Crew consumption.
-    """
-    return {
-        "crew": "satellite",
-        "plan": plan,
-        "artifacts": artifacts or {},
-    }
+        return p.read_text(encoding="utf-8")
 
+    if "mission_plan" in inputs and isinstance(inputs["mission_plan"], str):
+        return inputs["mission_plan"]
 
-# A stand-in you can use while Mission Crew isn't implemented yet.
-STAND_IN_MISSION_CONTEXT: Dict[str, Any] = {
-    "mission_context": {
-        "objectives": [
-            "Provide high-resolution imaging for priority regions",
-            "Ensure daily data downlink to Earth when possible",
-        ],
-        "priorities": {
-            "P1": ["comms", "hazard_monitoring"],
-            "P2": ["imaging_targets"],
-        },
-        "constraints": {
-            "max_downlink_per_sol": "2GB",
-            "min_comm_windows": 3,
-        },
-        "hazards": {
-            "dust_storm": {"level": "medium", "area": "sector_C"},
-            "radiation": {"level": "low", "area": "global"},
-        },
-    }
-}
-
-
+    return ""

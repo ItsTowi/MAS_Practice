@@ -1,5 +1,5 @@
 import json
-from crewai_tools import BaseTool
+from crewai.tools import BaseTool
 import networkx as nx
 from pydantic import Field
 

@@ -2,7 +2,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from typing import List
 from pydantic import BaseModel, Field
-from tools.drone_tools import DroneInfoTool, NodeDistanceTool
+from src.mars_exploration.tools.drone_tools import DroneInfoTool, NodeDistanceTool
 
 # Para cada dron necesito ID, Objetivo, Ruta, Distancia, Notas
 class DroneAssignment(BaseModel):
@@ -19,7 +19,7 @@ class DroneFleetPlan(BaseModel):
 class DroneCrew():
     """Drone Crew for Mars Exploration"""
     
-    agents_config = 'config/drone_agents.yaml'
+    agents_config = 'config/drone_agent.yaml'
     tasks_config = 'config/drone_tasks.yaml'
 
     def __init__(self) -> None:
@@ -34,6 +34,7 @@ class DroneCrew():
     def drone_mission_analyst(self) -> Agent:
         return Agent(
             config=self.agents_config['drone_mission_analyst'],
+            llm=self.llm,
             verbose=True
         )
 
@@ -44,6 +45,7 @@ class DroneCrew():
             # Este necesita tools de distancias y drones
             tools=[self.drone_info_tool, self.node_distance_tool],
             verbose=True,
+            llm=self.llm,
             allow_delegation=False
         )
 
@@ -52,7 +54,8 @@ class DroneCrew():
         return Agent(
             config=self.agents_config['drone_hazard_detector'],
             # Este solo necesita de distancias
-            tools=[self.mars_nav_tool],
+            tools=[self.drone_info_tool],
+            llm=self.llm,
             verbose=True
         )
 
@@ -60,6 +63,7 @@ class DroneCrew():
     def drone_reporter(self) -> Agent:
         return Agent(
             config=self.agents_config['drone_reporter'],
+            llm=self.llm,
             verbose=True
         )
 

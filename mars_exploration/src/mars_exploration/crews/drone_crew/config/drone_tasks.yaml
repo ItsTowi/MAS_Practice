@@ -45,4 +45,4 @@ validate_safety_task:
     Ensure final paths do not violate any safety constraints.
   expected_output: >
     A certified safe flight plan with any necessary route corrections applied.
-  agent: drone_hazard_detection
+  agent: drone_hazard_detector

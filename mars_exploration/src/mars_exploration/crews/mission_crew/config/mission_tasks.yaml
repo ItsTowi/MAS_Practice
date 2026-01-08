@@ -1,0 +1,57 @@
+analyze_mission_report_task:
+  description: >
+    Ingest the raw Markdown report from {mission_report_path}. 
+    Perform a deliberative analysis to extract all scientific goals (node, terrain type, task), 
+    operational constraints (energy/time thresholds), and the priority hierarchy. 
+    Initialize the mission strategic layer for the system.
+  expected_output: >
+    A comprehensive structured summary of the mission's scope, including goals, 
+    constraints, and priorities.
+  agent: mission_planner
+
+assess_hazards_task:
+  description: >
+    Analyzing the {terrain_data_path} and knowing the information of {mission_report_path} classify environmental 
+    hazards such as dust storms, cliffs, or radiation zones. 
+    Explicitly define "No-Go" zones for routing logic based on the 'unstable' or 
+    'radioactive' classifications mentioned in the report.
+  expected_output: >
+    A hazard matrix listing restricted nodes, threat types, and safe entry perimeters.
+  agent: hazard_assessment
+
+
+optimize_resources_task:
+  description: >
+    Apply rational reasoning to evaluate rover energy thresholds and drone flight limits.
+    Enforce asset-role constraints:
+    - SATELLITE: communication relay, wide-area mapping, macro hazard detection.
+    - DRONE: panoramic imaging, radiation measurement, reconnaissance in hazardous or steep nodes.
+    - ROVER: physical-contact tasks only (subsurface sampling, ice analysis).
+    Prohibit assigning non-contact tasks to the Rover unless no alternative exists.
+    Propose an allocation strategy for energy, bandwidth, and time.
+  expected_output: >
+    An optimization plan detailing resource distribution per mission phase and efficiency warnings.
+  agent: resource_optimization
+
+prioritize_science_task:
+  description: >
+    Evaluate scientific targets based on their value vs. feasibility. 
+    If a high-value node is located in a hazard zone (as identified by the Hazard Agent), 
+    calculate the scientific trade-off and suggest alternative nodes if available.
+  expected_output: >
+    A ranked list of target nodes scored by scientific importance and operational safety.
+  agent: scientific_target_evaluator
+
+synthesize_final_plan_task:
+  description: >
+    Review the outputs from Hazard, Resource, and Science agents. 
+    Create a comprehensive Master Mission Plan.
+    The 'markdown_report' field MUST be a full-length document including:
+    1. Executive Summary: Overall mission feasibility.
+    2. Detailed Hazard Analysis: List nodes avoided and why.
+    3. Resource Strategy: How the battery threshold and drone limit are respected.
+    4. Unit Assignments: Table with actions and their strategic importance.
+  expected_output: >
+    A MasterMissionPlan object where the markdown_report field contains 
+    a professional, highly informative document.
+  agent: decision_synthesizer

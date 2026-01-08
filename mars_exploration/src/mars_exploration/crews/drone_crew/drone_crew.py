@@ -22,6 +22,9 @@ class DroneCrew():
     agents_config = 'config/drone_agents.yaml'
     tasks_config = 'config/drone_tasks.yaml'
 
+    def __init__(self) -> None:
+        self.llm = 'ollama/qwen3:4b'
+
     # Tools
     drone_info_tool = DroneInfoTool()
     node_distance_tool = NodeDistanceTool()

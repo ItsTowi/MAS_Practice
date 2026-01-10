@@ -1,4 +1,4 @@
-from crewai import Agent, Crew, Process, Task
+from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Literal
@@ -70,12 +70,13 @@ class MasterMissionPlan(BaseModel):
 class IntegrationCrew():
     """Integration Crew for Mars Mission"""
     
-    agents_config = 'config/integration_agents.yaml'
+    agents_config = 'config/integration_agent.yaml'
     tasks_config = 'config/integration_tasks.yaml'
     
     # Asegúrate de que el modelo coincida con el que usáis (ej. gemini, gpt-4, etc.)
     def __init__(self) -> None:
-        self.llm = 'gemini/gemini-2.5-flash' 
+        #self.llm = 'gemini/gemini-2.0-flash' 
+        self.llm = "ollama/qwen3:8b" # Asegúrate de que es el nombre correcto
         
     @agent
     def data_fusioner(self) -> Agent:
@@ -129,7 +130,7 @@ class IntegrationCrew():
     def coordinate_mission_task(self) -> Task:
         return Task(
             config=self.tasks_config['coordinate_mission_task'],
-            output_pydantic=MasterMissionPlan,
+            #output_pydantic=MasterMissionPlan,
             output_file='outputs/final_mission.md'
         )
                 
@@ -139,5 +140,6 @@ class IntegrationCrew():
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True
+            verbose=True,
+            max_rpm=3
         )

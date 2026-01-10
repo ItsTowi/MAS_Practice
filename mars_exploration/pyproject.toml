@@ -28,11 +28,14 @@ mars_exploration = "mars_exploration.main:run"
 run_crew = "mars_exploration.main:run"
 train = "mars_exploration.main:train"
 replay = "mars_exploration.main:replay"
-test = "mars_exploration.tests.test_mission_crew:test_mission"
+test = "mars_exploration.tests.test_integration_crew:test_integration"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mars_exploration"]
 
 [tool.crewai]
 type = "crew"

@@ -12,6 +12,10 @@ fuse_data_task:
     - Identify active hazards and mapped areas from drone reports.
     - Consolidate all environmental data into a single truth source.
 
+    IMPORTANT: You must output a valid JSON object strictly following the schema.
+    DO NOT add markdown formatting like ```json or ```.
+    DO NOT add introductory text like "Here is the output".
+    Just return the raw JSON object.
   expected_output: >
     A structured UnifiedGlobalState object containing the complete consolidated mission status.
   agent: data_fusioner
@@ -28,6 +32,10 @@ detect_anomalies_task:
     
     If data is clean, set 'is_clean' to True. If issues are found, list them in 'identified_issues'.
 
+    IMPORTANT: You must output a valid JSON object strictly following the schema.
+    DO NOT add markdown formatting like ```json or ```.
+    DO NOT add introductory text like "Here is the output".
+    Just return the raw JSON object.
   expected_output: >
     A DetailedAnomalyReport object detailing any critical errors found and a validity score.
   agent: anomaly_detector

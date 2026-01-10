@@ -1,29 +1,24 @@
+orbit_planning_agent:
+  role: "Orbit Planning Agent"
+  goal: "Optimize orbital coverage to support imaging and communications for mission targets."
+  backstory: "Hybrid agent combining planning with adaptive retasking."
+
 orbital_imaging_agent:
   role: "Orbital Imaging Agent"
-  goal: "Plan orbital imaging (what/when) aligned with mission targets, orbit constraints and hazards."
-  backstory: "Deliberative remote sensing planner using knowledge of orbit and mission priorities."
-  verbose: true
+  goal: "Plan high-resolution imaging over approved target nodes."
+  backstory: "Deliberative agent scheduling imaging with orbit constraints."
 
 communication_relay_agent:
   role: "Communication Relay Agent"
-  goal: "Reactively schedule communication windows and relay operations to ensure reliable data transmission."
-  backstory: "Reactive telecom operator responding to comm availability and interference."
-  verbose: true
-
-orbit_planning_agent:
-  role: "Orbit Planning Agent"
-  goal: "Propose orbit retasking/coverage schedule to maximize coverage and enable imaging/comms goals."
-  backstory: "Hybrid flight-dynamics planner combining long-term planning with adaptive updates."
-  verbose: true
+  goal: "Maintain reliable relay and downlink between Mars assets and Earth."
+  backstory: "Reactive agent that responds to comm needs and link changes."
 
 environment_monitoring_agent:
   role: "Environment Monitoring Agent"
-  goal: "Detect and summarize global phenomena (dust storms, radiation, low visibility) and alert other crews."
-  backstory: "Adaptive analyst improving hazard assessment from orbital observations."
-  verbose: true
+  goal: "Summarize hazards and mission risks relevant to satellite operations."
+  backstory: "Adaptive analyst monitoring storms and global risk conditions."
 
 satellite_coordination_agent:
   role: "Satellite Coordination Agent"
-  goal: "Integrate orbit, imaging, comms, and environment into a coherent satellite plan and interface with Integration Crew."
-  backstory: "Cognitive cooperative coordinator resolving internal conflicts and prioritizing outputs."
-  verbose: true
+  goal: "Integrate all satellite subplans and produce the report for Integration Crew."
+  backstory: "Cooperative coordinator that resolves conflicts and consolidates outputs."

@@ -1,30 +1,30 @@
+analyze_mission_plan_task:
+  description: >
+    Read mission_plan.md and extract approved target nodes, planned steps, and mission risks.
+  expected_output: "Targets, steps and risks summary."
+
 orbit_planning_task:
   description: >
-    Given mission_context and satellites.json, propose orbit coverage / retasking decisions that support imaging and communications.
-    Output JSON with: adjustments, coverage_notes, constraints.
-  expected_output: "Orbit plan JSON."
+    Produce orbit coverage/retasking decisions to support mission imaging and communications.
+  expected_output: "Orbit decisions summary."
 
 orbital_imaging_task:
   description: >
-    Using mission_context + orbit planning decisions, produce a high-resolution imaging request plan.
-    Include 3-6 targets with priority and justification. Output JSON.
-  expected_output: "Imaging plan JSON."
+    Generate imaging requests (3-6) based on approved target nodes and priorities.
+  expected_output: "Imaging plan."
 
 communication_relay_task:
   description: >
-    Using mission_context + orbit planning decisions, generate communication windows for downlink and relay.
-    Output JSON with at least 3 windows and at least 1 relay. Include contingency.
-  expected_output: "Communication plan JSON."
+    Generate downlink windows to Earth and relay windows to assets based on mission steps.
+  expected_output: "Communication plan."
 
 environment_monitoring_task:
   description: >
-    Summarize global phenomena (dust storms, radiation, low visibility, comm interference) from mission_context hazards.
-    Output JSON with hazards and recommended actions.
-  expected_output: "Environment report JSON."
+    Identify risks/hazards from mission_plan.md and recommend operational adjustments.
+  expected_output: "Environment risks summary."
 
-satellite_coordination_task:
+generate_satellite_plan_task:
   description: >
-    Integrate orbit plan, imaging plan, comm plan, and environment report into a single Satellite Crew plan.
-    Resolve conflicts and add coordination notes and open issues.
-    Output final JSON plan and artifact references.
-  expected_output: "Final satellite crew plan JSON."
+    Consolidate orbit, imaging, communications and environment into one Markdown report for Integration Crew.
+    Use sections: Orbit, Imaging, Communications, Environment / Risks.
+  expected_output: "Markdown satellite plan."

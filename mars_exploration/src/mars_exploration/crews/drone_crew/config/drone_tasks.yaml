@@ -1,6 +1,9 @@
 analyze_mission_task:
   description: >
-    Analyze the provided Mission Report in detail. 
+    Analyze the provided Mission Report in detail:
+
+    "{mission_report}"
+
     Identify all scientific objectives related to drone surveys, photography, or data collection.
     Extract specific environmental hazards (like dust storms or radiation zones) and their locations/sectors 
     that could impact flight safety.

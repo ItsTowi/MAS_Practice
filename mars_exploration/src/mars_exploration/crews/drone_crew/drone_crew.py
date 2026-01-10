@@ -102,11 +102,5 @@ class DroneCrew():
             agents=self.agents,
             tasks=self.tasks,
             process=Process.sequential,
-            verbose=True,
-            embedder = {
-                'provider': 'ollama',
-                'config': {
-                    'model': 'nomic-embed-text:latest'
-                }
-            }
+            verbose=True
         )

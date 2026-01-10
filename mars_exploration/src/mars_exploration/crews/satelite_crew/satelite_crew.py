@@ -105,7 +105,7 @@ class SatelliteCrew:
         return Task(
             config=self.tasks_config["generate_satellite_plan_task"],
             agent=self.satellite_coordination_agent(),
-            output_file="crews/satelite_crew/outputs/satellite_plan.md",
+            output_file="outputs/satelite_plan.md",
         )
 
 

@@ -27,14 +27,17 @@ generate_report_task:
 
 plan_routes_task:
   description: >
-    Based on the objectives extracted by the Analyst, use the available tools to:
-    1. Read the drone fleet data. Pay strict attention to the 'range' (maximum travel distance) and 'camera_resolution' of each drone.
-    2. Read the Mars Terrain Graph to calculate distances between nodes.
-    3. Assign drones to objectives strategically:
-       - CONSTRAINT: The total length of the calculated path MUST be less than or equal to the drone's 'range'. If a target is too far for a drone, do not assign it.
-       - OPTIMIZATION: If an objective requires detailed imaging (as per Mission Report), prioritize assigning drones with higher 'camera_resolution' (e.g., 20MP vs 12MP).
-       - EFFICIENCY: For general tasks, assign the closest drone to minimize 'range' usage.
-    4. Calculate the precise path (node sequence) for each assignment.
+    Based on the objectives extracted by the Analyst, proceed with the following steps STRICTLY:
+
+    1. **Fleet Analysis**: Check the 'drones.json' data using the tool to know the range of each drone.
+    2. **Route Calculation (CRITICAL)**: For every potential assignment, YOU MUST USE the `Node Distance Tool`. 
+       - Input the start and end nodes.
+       - **IMPORTANT**: You must pass the drone's 'range' as the 'max_range' argument to the tool.
+       - If the tool returns "FAILURE", that route is INVALID. Try a different drone or a closer target.
+    
+    3. **Final Plan**: Only assign drones to targets where the tool returned "SUCCESS".
+    
+    **WARNING**: Do NOT hallucinate or guess distances. You must use the values returned by the tool calculation. If a path is too long, report it as unassigned or choose a different target.
   expected_output: >
     A detailed flight plan including Drone ID, Start Node, Target Node, Calculated Distance, and the sequence of nodes.
     Crucially, verify that 'Calculated Distance' <= 'Drone Range' for every assignment.

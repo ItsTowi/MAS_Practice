@@ -1,0 +1,66 @@
+fuse_data_task:
+  description: >
+    Receive and analyze the heterogeneous operational reports from specialized crews.
+
+    Your inputs are:
+    1. Rover Crew Report: {{rover_report}}
+    2. Drone Crew Report: {{drone_report}}
+    3. Satellite Crew Report: {{satellite_report}}
+    
+    You must extract key metrics to populate the data model:
+    - Extract exact locations, battery levels, and status for every rover.
+    - Identify active hazards and mapped areas from drone reports.
+    - Consolidate all environmental data into a single truth source.
+
+  expected_output: >
+    A structured UnifiedGlobalState object containing the complete consolidated mission status.
+  agent: data_fusioner
+
+detect_anomalies_task:
+  description: >
+    Review the fused data model (UnifiedGlobalState) and the original reports to 
+    identify logical inconsistencies or physical impossibilities.
+
+    Check for:
+    - Conflicting location data (e.g., a rover reported in two places).
+    - Resource conflicts (e.g., planned energy usage exceeds available battery).
+    - Temporal clashes (e.g., data transmission scheduled when no satellite is in range).
+    
+    If data is clean, set 'is_clean' to True. If issues are found, list them in 'identified_issues'.
+
+  expected_output: >
+    A DetailedAnomalyReport object detailing any critical errors found and a validity score.
+  agent: anomaly_detector
+
+generate_plan_task:
+  description: >
+    Using the validated data and the Mission Goals:
+    {{mission_goals}}
+
+    Draft a comprehensive mission plan. This plan must act as a strategic directive.
+    Assign specific scientific targets to the most suitable resources (Rovers for surface sampling, Drones for aerial survey).
+    Ensure the sequence of operations is logical (e.g., "Drone maps Sector A" before "Rover traverses Sector A").
+    Justify your decisions based on the current context and priorities.
+  expected_output: >
+    A detailed textual draft of the mission plan, including task assignments and strategic reasoning.
+  agent: mission_plan_generator
+
+coordinate_mission_task:
+  description: >
+    Take the validated actions and the Unified Global State to produce the final comprehensive plan.
+    
+    You must generate a **Markdown file** ('outputs/final_mission.md') that is professional and strictly structured.
+    It MUST act as a coherent story of the mission, not just a list of bullet points.
+    
+    The structure of the Markdown MUST include:
+    1. **Header**: Mission ID and Global Status.
+    2. **Executive Summary**: A high-level strategic overview.
+    3. **Global Synchronized Timeline**: A table or list showing exactly *when* each agent acts, proving that drones, satellites, and rovers are coordinated (e.g., Satellite scans BEFORE Rover moves).
+    4. **Detailed Orders**: Break down tasks by Crew (Rover, Drone, Satellite).
+    5. **Risk & Resource Report**: Mention battery usage estimates and hazards avoided.
+    
+    Use the data from the 'DetailedAnomalyReport' to include a section on resolved conflicts if any existed.
+  
+  expected_output: >
+    A 'MasterMissionPlan' Pydantic object AND a strictly formatted 'outputs/final_mission.md' file following the structure above.
+  agent: coordinator

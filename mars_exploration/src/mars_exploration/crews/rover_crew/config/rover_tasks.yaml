@@ -1,0 +1,123 @@
+analyze_rover_objectives_task:
+  description: >
+    Mission plan (Markdown):
+
+    {mission_plan}
+
+    Task:
+      - Find every "### Step" block anywhere in the document.
+      - Inside each step block, extract:
+          * Unit (rover/drone/satellite)
+          * Target Node (e.g., N90)
+          * Task (action text)
+      - Output ONLY steps where Unit is rover.
+      - Also scan the "## ⚠️ Identified Mission Risks" section (if present) and include rover-related risks only.
+
+    Rules:
+      - Do not invent nodes, tasks, or steps.
+      - If a field is missing inside a step block, write "unknown".
+      - Do not claim missing inputs.
+
+    Output format (exact):
+      Rover Objectives:
+      - Step: <X>, Target: <N##>, Task: <task>, Notes: <risk/none>
+  expected_output: >
+    Rover Objectives list extracted from the mission plan.
+  agent: rover_coordinator_agent
+
+terrain_traversability_task:
+  description: >
+    Terrain GraphML:
+    {terrain_graphml}
+
+    Rover JSON:
+    {rovers_json}
+
+    Task:
+      - Provide a conservative traversability note per rover target produced previously in this run.
+      - If terrain attributes are not present in GraphML, state "terrain attributes unspecified" and continue.
+
+    Output format (exact):
+      Traversability Notes:
+      - Target: <N##>, Feasibility: <feasible/risky/unknown>, Notes: <short reason>
+  expected_output: >
+    Traversability notes per rover target.
+  agent: terrain_analysis_agent
+
+plan_rover_routes_task:
+  description: >
+    Plan rover assignments and routes.
+
+    You are given:
+      - Rover Objectives produced earlier in this run.
+      - rovers_json with rover IDs and start locations.
+      - routes_hint JSON containing precomputed shortest routes and distances.
+
+    Route Hints:
+    {routes_hint}
+
+    Rover JSON:
+    {rovers_json}
+
+    Rules:
+      - Assign a rover for EVERY rover objective.
+      - Rover IDs must come from rovers_json.
+      - Targets must come from Rover Objectives.
+      - Pick the rover with the smallest distance in routes_hint for each target.
+      - Use the exact route list from routes_hint.
+      - Do not invent nodes.
+      - If no route exists for a target, assign any rover and set route=[target] with risk_notes=["no route available"].
+
+    Output MUST be strict JSON only:
+      {
+        "rover_assignments": [
+          {
+            "rover_id": "rover_0",
+            "target": "N90",
+            "route": ["N16","N12","N90"],
+            "actions": ["subsurface exploration"],
+            "est_distance": 12.34,
+            "est_energy_cost": null,
+            "risk_notes": []
+          }
+        ]
+      }
+  expected_output: >
+    JSON rover_assignments with routes and distances.
+  agent: pathfinding_agent
+
+estimate_energy_budget_task:
+  description: >
+    Estimate energy for each rover assignment.
+
+    Route Hints:
+    {routes_hint}
+
+    Rover JSON:
+    {rovers_json}
+
+    Rules:
+      - Rover energy comes from rovers_json.energy (if absent, write unknown and warn).
+      - If routes_hint provides energy_cost for (rover_id,start,target), use it.
+      - Otherwise estimate: est_energy_cost = 2*moves + 5 where moves=max(len(route)-1,1).
+      - Add warning if remaining energy < 30.
+
+    Output MUST be strict JSON only with same structure:
+      {
+        "rover_assignments": [ ... updated ... ]
+      }
+  expected_output: >
+    Updated rover_assignments JSON with est_energy_cost and warnings.
+  agent: energy_management_agent
+
+generate_rover_operation_plan_task:
+  description: >
+    Write the final rover operation plan in Markdown.
+
+    Requirements:
+      - Include objectives summary + one section per assignment.
+      - Do not invent rover IDs or targets.
+      - Use "unknown" when needed.
+  expected_output: >
+    A clean Markdown rover operation plan ready for integration.
+  agent: rover_reporter_agent

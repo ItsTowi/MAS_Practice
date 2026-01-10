@@ -1,98 +1,135 @@
 #!/usr/bin/env python
-import sys
-import warnings
-from datetime import datetime
-from crewai.flow.flow import Flow, listen, start, router
+import os
+from pathlib import Path
+from pydantic import BaseModel
+from crewai.flow.flow import Flow, listen, start, router, and_
 
-# Importing the 5 required crews based on your MAS design
-from mars_exploration.src.mars_exploration.crews.mission_crew.mission_crew import MissionCrew
-from mars_exploration.src.mars_exploration.crews.rover_crew.rover_crew import RoverCrew
-from mars_exploration.src.mars_exploration.crews.drone_crew.drone_crew import DroneCrew
-from mars_exploration.src.mars_exploration.crews.satelite_crew.satelite_crew import SatelliteCrew
-from mars_exploration.src.mars_exploration.crews.integration_crew.integration_crew import IntegrationCrew
+from mars_exploration.crews.mission_crew.mission_crew import MissionCrew
+from mars_exploration.crews.rover_crew.rover_crew import RoverCrew
+from mars_exploration.crews.drone_crew.drone_crew import DroneCrew
+from mars_exploration.crews.integration_crew.integration_crew import IntegrationCrew
 
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+# Utils
+from mars_exploration.tests.test_rover_crew import extract_rover_steps, build_routes_hint
+from mars_exploration.utils.utils_markdown import mission_crew_markdown
 
-class MarsExplorationFlow(Flow):
-    
+
+class MarsExplorationState(BaseModel):
+    # Inicializamos con valores por defecto para evitar que Path("") apunte al directorio actual
+    mission_plan_text: str = ""
+    mission_plan_path: str = "outputs/mission_plan.md"
+    rover_report_path: str = "outputs/rover_operation_plan"
+    drone_report_path: str = "outputs/drone_report.md"
+    final_report_path: str = "outputs/final_mission.md"
+
+class MarsExplorationFlow(Flow[MarsExplorationState]):
+
     @start()
     def strategic_assessment(self):
-        """
-        Step 1: The Mission Crew performs strategic planning and hazard assessment.
-        """
-        print("--- [Flow] Starting Strategic Planning (Mission Crew) ---")
-        output = MissionCrew().crew().kickoff(inputs={
-            "mission_report_path": "input/mission_report.md",
-            "terrain_graph_path": "input/mars_terrain.graphml"
-        })
-
-        self.state.strategic_plan = output.raw
-        return output.raw
-
-    @listen("rover_exploration")
-    def run_rover_mission(self, assessment_data):
-        print("--- [Flow] Executing Surface Mission (Rover & Drone Crews) ---")
-        # Coordination: Rover and Drone crews run asynchronously to maximize efficiency
-        rover_task = RoverCrew().crew().kickoff_async(inputs=assessment_data)
-       
-        return ({"rover": rover_task})
-
-    @listen("satelite_exploration")
-    def run_satellite_mission(self, assessment_data):
-        print("--- [Flow] Executing Orbital Mission (Satellite Crew) ---")
-        return SatelliteCrew().crew().kickoff(inputs=assessment_data)
-    
-    @listen("drone_exploration")
-    def run_drone_mission(self, assessment_data):
-        drone_task = DroneCrew().crew().kickoff_async(inputs=assessment_data)
-        return  ({"drone": drone_task})
-
-    #and
-    @listen(["run_rover_mission", "run_satellite_mission", "run_drone_mission"])
-    def finalize_integration(self, mission_results):
-        """
-        Step 3: Integration Crew fuses data and resolves anomalies for the final report.
-        """
-        print("--- [Flow] Finalizing Integration (Integration Crew) ---")
-        # The Data Fusioner and Anomaly Detector agents process all gathered data
+        Path("outputs").mkdir(exist_ok=True)
         
-        # We will flag the status of the mission if all the scientific goals are completed or not
-        # If not, we can repeat the procces until doned. Using a router
-        final_report = IntegrationCrew().crew().kickoff(inputs={"results": mission_results})
-        return final_report
+        plan_path = Path(self.state.mission_plan_path)
+        
+        print("Mission Crew Running")
+
+        inputs = {
+            "mission_report_path": "src/mars_exploration/inputs/mission_report.md",
+            "terrain_data_path": "src/mars_exploration/inputs/mars_terrain.graphml"
+        }
+
+        result = MissionCrew().crew().kickoff(inputs=inputs)
+
+        crew_output = result.pydantic
+        mission_crew_markdown(crew_output=crew_output)
+
+        self.state.mission_plan_path = "outputs/mission_plan.md"
+        return result
+
+    @listen("strategic_assessment")
+    def run_rover_mission(self, mission_output):
+        
+        print("Rover Crew Running")
+
+        terrain_path = Path("src/mars_exploration/inputs/mars_terrain.graphml")
+        rovers_path = Path("src/mars_exploration/inputs/rovers.json")
+
+        mission_plan_text = self.state.mission_plan_path.read_text(encoding="utf-8")
+
+        rover_steps = extract_rover_steps(mission_plan_text)
+        routes_hint = build_routes_hint(terrain_path, rovers_path, rover_steps)
+        
+        rover_inputs = {
+            "mission_plan": mission_plan_text,
+            "terrain_graphml": terrain_path.read_text(encoding="utf-8"),
+            "rovers_json": rovers_path.read_text(encoding="utf-8"),
+            "routes_hint": routes_hint
+        }
+
+        result = RoverCrew().crew().kickoff(inputs=rover_inputs)
+        
+        Path(self.state.rover_report_path).write_text(result.raw, encoding="utf-8")
+        return result
+
+    @listen("strategic_assessment")
+    def run_drone_mission(self, mission_output):
+        print("Drone Crew")
+
+        drone_inputs = {
+            "mission_report": self.state.mission_plan_text
+        }
+
+        result = DroneCrew().crew().kickoff(inputs=drone_inputs)
+        md_path = "outputs/"
+
+        crew_output = result.raw if hasattr(result, 'raw') else str(result)
+
+        with open(md_path, 'w') as f:
+            f.write(crew_output)
+        print(f"💾 Saved Markdown report: {md_path}")
+
+        Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
+
+        return result
+
+    @listen(and_(run_rover_mission, run_drone_mission))
+    def finalize_integration(self, results):
+        print("Integration Crew")
+
+        integration_inputs = {
+            "rover_report": Path(self.state.rover_report_path).read_text(encoding="utf-8"),
+            "drone_report": Path(self.state.drone_report_path).read_text(encoding="utf-8"),
+            "satellite_report": "No satellite data available in this mission cycle.",
+            "mission_goals": "Consolidate all surface and aerial data into a unified mission log."
+        }
+
+        final_result = IntegrationCrew().crew().kickoff(inputs=integration_inputs)
+
+        return final_result
     
     @router(finalize_integration)
-    def replan(self):
-        #If self succes then finish
-        #Else again
-        return 0
-    
-    @listen("succes")
-    def succes(self):
-        return 0
-    
-    @listen("failed")
-    def failed(self):
-        return 0
+    def mission_validation_router(self, final_output):
+        status = final_output.raw.upper()
+        if any(word in status for word in ["CRITICAL", "REPLAN", "ERROR"]):
+            return "replan_required"
+        return "mission_success"
+
+    @listen("mission_success")
+    def on_success(self):
+        print(f"✅ SUCCESS: Misión completada. Informe: {self.state.final_report_path}")
+
+    @listen("replan_required")
+    def on_replan(self):
+        print("⚠️ WARNING: Se requieren ajustes. Revisar informe de integración.")
 
 def run():
-    """Run the Mars Exploration Flow."""
     try:
         flow = MarsExplorationFlow()
-        result = flow.kickoff()
-        print(result)
+        flow.kickoff()
     except Exception as e:
-        raise Exception(f"An error occurred while running the flow: {e}")
-
-def train():
-    """Train the flow's internal crews for optimized coordination."""
-    try:
-        # Lab 07 training logic applied to the flow context
-        flow = MarsExplorationFlow()
-        flow.train(n_iterations=int(sys.argv[1]), filename=sys.argv[2])
-    except Exception as e:
-        raise Exception(f"An error occurred while training the flow: {e}")
-
+        print(f"❌ Error en el Flow: {e}")
 
 if __name__ == "__main__":
     run()
+
+
+

@@ -76,8 +76,6 @@ class IntegrationTestFlow(Flow):
         print("\n✅ Integration Process Completed!")
         
         # 1. Validar el Objeto Pydantic (MasterMissionPlan)
-        
-        
         if crew_output.pydantic:
             plan = crew_output.pydantic
             print("\n--- 🧠 Structured Data (Pydantic) ---")

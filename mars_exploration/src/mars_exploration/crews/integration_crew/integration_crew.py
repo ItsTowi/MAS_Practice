@@ -76,7 +76,7 @@ class IntegrationCrew():
     # Asegúrate de que el modelo coincida con el que usáis (ej. gemini, gpt-4, etc.)
     def __init__(self) -> None:
         #self.llm = 'gemini/gemini-2.0-flash' 
-        self.llm = "ollama/qwen3:8b" # Asegúrate de que es el nombre correcto
+        self.llm = "ollama/qwen3:4b" # Asegúrate de que es el nombre correcto
         
     @agent
     def data_fusioner(self) -> Agent:

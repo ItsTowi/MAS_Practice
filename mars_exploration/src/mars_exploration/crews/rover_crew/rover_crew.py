@@ -18,16 +18,10 @@ class RoverCrew:
 
         # Tools are optional; the crew must still run even if tools are unavailable.
         try:
-            from src.mars_exploration.tools.drone_tools import NodeDistanceTool
+            from mars_exploration.tools.drone_tools import NodeDistanceTool
             self.node_distance_tool = NodeDistanceTool()
         except Exception:
             self.node_distance_tool = None
-
-        try:
-            from src.mars_exploration.tools.rover_tools import RoverInfoTool
-            self.rover_info_tool = RoverInfoTool()
-        except Exception:
-            self.rover_info_tool = None
 
     # ---------------- Agents ----------------
     @agent
@@ -102,7 +96,7 @@ class RoverCrew:
     def generate_rover_operation_plan_task(self) -> Task:
         return Task(
             config=self.tasks_config["generate_rover_operation_plan_task"],
-            output_file="mars_exploration/outputs/rover_operation_plan.md",
+            output_file="outputs/rover_operation_plan.md",
         )
 
     # ---------------- Crew ----------------

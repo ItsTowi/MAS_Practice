@@ -2,7 +2,7 @@ from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from typing import List
 from pydantic import BaseModel, Field
-from src.mars_exploration.tools.drone_tools import DroneInfoTool, NodeDistanceTool
+from mars_exploration.tools.drone_tools import DroneInfoTool, NodeDistanceTool
 
 # Para cada dron necesito ID, Objetivo, Ruta, Distancia, Notas
 class DroneAssignment(BaseModel):

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from crewai.flow.flow import Flow, listen, start
 import json
-from src.mars_exploration.crews.drone_crew.drone_crew import DroneCrew
+from mars_exploration.crews.drone_crew.drone_crew import DroneCrew
 
 # --- MOCK INPUT ---
 # Simulamos lo que la Mission Crew nos enviaría.

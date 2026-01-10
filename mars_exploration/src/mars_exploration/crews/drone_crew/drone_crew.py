@@ -23,7 +23,7 @@ class DroneCrew():
     tasks_config = 'config/drone_tasks.yaml'
 
     def __init__(self) -> None:
-        self.llm = 'ollama/qwen2.5:3b'
+        self.llm = 'ollama/qwen3:4b'
 
     # Tools
     drone_info_tool = DroneInfoTool()
@@ -78,7 +78,7 @@ class DroneCrew():
     def plan_routes_task(self) -> Task:
         return Task(
             config=self.tasks_config['plan_routes_task'],
-            # output_pydantic=DroneFleetPlan
+            output_pydantic=DroneFleetPlan
         )
 
     @task

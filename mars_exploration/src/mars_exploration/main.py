@@ -28,6 +28,7 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
 
     @start()
     def strategic_assessment(self):
+        """
         Path("outputs").mkdir(exist_ok=True)
         
         plan_path = Path(self.state.mission_plan_path)
@@ -45,10 +46,12 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
 
         self.state.mission_plan_path = "outputs/mission_plan.md"
         return result
+        """
 
     @listen("strategic_assessment")
     def run_rover_mission(self, mission_output):
         
+        """
         print("Rover Crew Running")
 
         terrain_path = Path("src/mars_exploration/inputs/mars_terrain.graphml")
@@ -70,9 +73,10 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         
         Path(self.state.rover_report_path).write_text(result.raw, encoding="utf-8")
         return result
-        
+        """
     @listen("strategic_assessment")
     def run_drone_mission(self, mission_output):
+        """
         print("Drone Crew")
 
         drone_inputs = {
@@ -89,10 +93,11 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
 
         # Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
         return result
-   
+        """
     
     @listen("strategic_assessment")
     def run_satellite_mission(self, mission_output):
+        """
         print("Satellite Crew Running")
 
         mission_plan_text = Path(self.state.mission_plan_path).read_text(encoding="utf-8")
@@ -109,7 +114,7 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         self.state.satellite_report_path = satellite_report_path
 
         return result
-
+        """
 
     @listen(and_(run_rover_mission, run_drone_mission, run_satellite_mission))
     def finalize_integration(self, results):

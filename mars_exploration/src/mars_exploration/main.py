@@ -8,6 +8,7 @@ from mars_exploration.crews.mission_crew.mission_crew import MissionCrew
 from mars_exploration.crews.rover_crew.rover_crew import RoverCrew
 from mars_exploration.crews.drone_crew.drone_crew import DroneCrew
 from mars_exploration.crews.integration_crew.integration_crew import IntegrationCrew
+from mars_exploration.crews.satelite_crew.satelite_crew import SatelliteCrew
 
 # Utils
 from mars_exploration.tests.test_rover_crew import extract_rover_steps, build_routes_hint
@@ -20,6 +21,7 @@ class MarsExplorationState(BaseModel):
     mission_plan_path: str = "outputs/mission_plan.md"
     rover_report_path: str = "outputs/rover_operation_plan"
     drone_report_path: str = "outputs/drone_report.md"
+    satellite_report_path: str = "outputs/satellite_report.md"
     final_report_path: str = "outputs/final_mission.md"
 
 class MarsExplorationFlow(Flow[MarsExplorationState]):
@@ -88,15 +90,45 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         # Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
 
         return result
+    
+    @listen("strategic_assessment")
+    def run_satellite_mission(self, mission_output):
+        print("Satellite Crew Running")
 
-    @listen(and_(run_rover_mission, run_drone_mission))
+        # Lee el mission_plan.md que ha generado MissionCrew
+        mission_plan_text = Path(self.state.mission_plan_path).read_text(encoding="utf-8")
+
+        satellite_inputs = {
+            # Usa el mismo patrón: pasar el texto como input
+            "mission_plan_md": mission_plan_text
+        }
+
+        result = SatelliteCrew().crew().kickoff(inputs=satellite_inputs)
+
+        # Si tu SatelliteCrew está configurado para escribir un output_file,
+        # no hace falta guardar nada aquí.
+        # Pero por robustez, guardamos también el raw:
+        satellite_report_path = "crews/satelite_crew/outputs/satellite_plan.md"
+        # Si tu output_file ya está en esa ruta, esto será redundante, pero no rompe:
+        try:
+            Path(satellite_report_path).write_text(result.raw, encoding="utf-8")
+        except Exception:
+            pass
+
+        # Si quieres guardarlo en el state para Integration:
+        self.state.satellite_report_path = satellite_report_path
+
+        return result
+
+
+    @listen(and_(run_rover_mission, run_drone_mission, run_satellite_mission))
     def finalize_integration(self, results):
         print("Integration Crew")
 
         integration_inputs = {
             "rover_report": Path(self.state.rover_report_path).read_text(encoding="utf-8"),
             "drone_report": Path(self.state.drone_report_path).read_text(encoding="utf-8"),
-            "satellite_report": "No satellite data available in this mission cycle.",
+            "satellite_report": Path(self.state.satellite_report_path).read_text(encoding="utf-8"),
             "mission_goals": "Consolidate all surface and aerial data into a unified mission log."
         }
 

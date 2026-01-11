@@ -7,6 +7,8 @@ from typing import Any, Dict, List
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
+from mars_exploration.tools.satellite_tools import SatelliteInfoTool, SatelliteLinkTool
+
 
 @CrewBase
 class SatelliteCrew:
@@ -18,6 +20,9 @@ class SatelliteCrew:
     def __init__(self) -> None:
         self.llm = "ollama/qwen3:4b"
         self.mars_root = Path(__file__).resolve().parents[4]  # mars_exploration/
+        
+        self.info_tool = SatelliteInfoTool()
+        self.graph_tool = SatelliteLinkTool()
         # Optional tools could be added here (same pattern as RoverCrew)
 
     # ---------------- Agents ----------------
@@ -26,7 +31,8 @@ class SatelliteCrew:
         return Agent(
             config=self.agents_config["orbit_planning_agent"],
             llm=self.llm,
-            verbose=True,
+            tools = [self.info_tool, self.graph_tool],
+            verbose=True
         )
 
     @agent
@@ -35,6 +41,7 @@ class SatelliteCrew:
             config=self.agents_config["orbital_imaging_agent"],
             llm=self.llm,
             verbose=True,
+            tools = [self.info_tool, self.graph_tool],
             allow_delegation=False,
         )
 
@@ -44,6 +51,7 @@ class SatelliteCrew:
             config=self.agents_config["communication_relay_agent"],
             llm=self.llm,
             verbose=True,
+            tools = [self.info_tool, self.graph_tool],
             allow_delegation=False,
         )
 
@@ -61,6 +69,7 @@ class SatelliteCrew:
         return Agent(
             config=self.agents_config["satellite_coordination_agent"],
             llm=self.llm,
+            tools = [self.info_tool, self.graph_tool],
             verbose=True,
         )
 

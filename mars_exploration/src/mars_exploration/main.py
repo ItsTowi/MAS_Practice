@@ -21,7 +21,7 @@ class MarsExplorationState(BaseModel):
     mission_plan_path: str = "outputs/mission_plan.md"
     rover_report_path: str = "outputs/rover_operation_plan"
     drone_report_path: str = "outputs/drone_report.md"
-    satellite_report_path: str = "outputs/satellite_report.md"
+    satellite_report_path: str = "outputs/satelite_plan.md"
     final_report_path: str = "outputs/final_mission.md"
 
 class MarsExplorationFlow(Flow[MarsExplorationState]):
@@ -70,7 +70,7 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         
         Path(self.state.rover_report_path).write_text(result.raw, encoding="utf-8")
         return result
-
+        
     @listen("strategic_assessment")
     def run_drone_mission(self, mission_output):
         print("Drone Crew")
@@ -88,34 +88,24 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         report_path.write_text(output_content, encoding="utf-8")
 
         # Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
-
         return result
+   
     
     @listen("strategic_assessment")
     def run_satellite_mission(self, mission_output):
         print("Satellite Crew Running")
 
-        # Lee el mission_plan.md que ha generado MissionCrew
         mission_plan_text = Path(self.state.mission_plan_path).read_text(encoding="utf-8")
 
         satellite_inputs = {
-            # Usa el mismo patrón: pasar el texto como input
             "mission_plan_md": mission_plan_text
         }
 
         result = SatelliteCrew().crew().kickoff(inputs=satellite_inputs)
 
-        # Si tu SatelliteCrew está configurado para escribir un output_file,
-        # no hace falta guardar nada aquí.
-        # Pero por robustez, guardamos también el raw:
-        satellite_report_path = "crews/satelite_crew/outputs/satellite_plan.md"
-        # Si tu output_file ya está en esa ruta, esto será redundante, pero no rompe:
-        try:
-            Path(satellite_report_path).write_text(result.raw, encoding="utf-8")
-        except Exception:
-            pass
-
-        # Si quieres guardarlo en el state para Integration:
+        satellite_report_path = "mars_exploration/outputs/satellite_plan.md"
+        
+        Path(satellite_report_path).write_text(result.raw, encoding="utf-8")
         self.state.satellite_report_path = satellite_report_path
 
         return result
@@ -134,23 +124,13 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
 
         final_result = IntegrationCrew().crew().kickoff(inputs=integration_inputs)
 
+        output_content = final_result.raw if hasattr(final_result, 'raw') else str(final_result)
+        report_path = Path(self.state.final_report_path)
+
+        report_path.write_text(output_content, encoding="utf-8")
+
         return final_result
     
-    @router(finalize_integration)
-    def mission_validation_router(self, final_output):
-        status = final_output.raw.upper()
-        if any(word in status for word in ["CRITICAL", "REPLAN", "ERROR"]):
-            return "replan_required"
-        return "mission_success"
-
-    @listen("mission_success")
-    def on_success(self):
-        print(f"✅ SUCCESS: Misión completada. Informe: {self.state.final_report_path}")
-
-    @listen("replan_required")
-    def on_replan(self):
-        print("⚠️ WARNING: Se requieren ajustes. Revisar informe de integración.")
-
 def run():
     try:
         flow = MarsExplorationFlow()

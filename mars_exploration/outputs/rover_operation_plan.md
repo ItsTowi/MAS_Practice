@@ -1,43 +1,13 @@
-Rover Objectives:
+# Rover Operation Plan
 
-### Rover Assignment Plan
+## Objectives Summary
+- Step 1: Target N90, Task: subsurface exploration, Notes: Rover energy critical at N90
+- Step 2: Target N12, Task: radiation analysis, Notes: none
+- Step 3: Target N45, Task: subsurface exploration, Notes: none
+- Step Flam: Target N78, Task: radiation analysis, Notes: none
 
-#### Rover ID: rover_0
-- **Target Location**: N43
-- **Energy**: 95
-- **Speed**: 1.6
-- **Terrain Compatibility**: rocky, sandy, crater
-- **Estimated Energy Cost**: 7
-- **Feasibility**: unknown
-
-#### Rover ID: rover_1
-- **Target Location**: N16
-- **Energy**: 94
-- **Speed**: 2.45
-- **Terrain Compatibility**: plain, sandy, rocky
-- **Estimated Energy Cost**: 7
-- **Feasibility**: unknown
-
-#### Rover ID: rover_2
-- **Target Location**: N43
-- **Energy**: 76
-- **Speed**: 2.64
-- **Terrain Compatibility**: plain, sandy, icy
-- **Estimated Energy Cost**: 7
-- **Feasibility**: unknown
-
-#### Rover ID: rover_3
-- **Target Location**: N34
-- **Energy**: 59
-- **Speed**: 2.13
-- **Terrain Compatibility**: crater, icy, rocky
-- **Estimated Energy Cost**: 7
-- **Feasibility**: unknown
-
-#### Rover ID: rover_4
-- **Target Location**: N16
-- **Energy**: 80
-- **Speed**: 1.75
-- **Terrain Compatibility**: plain, rocky, crater
-- **Estimated Energy Cost**: 7
-- **Feasibility**: unknown
+## Traversability Analysis
+- **Target N90**: Feasibility: unknown, Notes: terrain attributes unspecified
+- **Target N12**: Feasibility: unknown, Notes: terrain attributes unspecified
+- **Target N45**: Feasibility: unknown, Notes: terrain attributes unspecified
+- **Target N78**: Feasibility: unknown, Notes: terrain attributes unspecified

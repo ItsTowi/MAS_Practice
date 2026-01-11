@@ -38,7 +38,6 @@ class DroneTestFlow(Flow):
         """
         print("Starting Drone Crew Test Flow...\n")
         
-        # 1. Verificamos que existan los archivos que usan las TOOLS (no son inputs directos, pero sin ellos falla)
         required_files = [
             "src/mars_exploration/inputs/drones.json",
             "src/mars_exploration/inputs/mars_terrain.graphml"
@@ -50,27 +49,22 @@ class DroneTestFlow(Flow):
                 raise FileNotFoundError(f"Required tool dependency file not found: {path}")
             print(f"Verified: {path}")
 
-        # 2. Preparamos el input (Simulado)
         inputs = {
             "mission_report": MOCK_MISSION_PLAN
         }
 
         try:
             print("\nKickoff Drone Crew with Mock Mission Plan...")
-            # Ejecutamos el crew
             result = DroneCrew().crew().kickoff(inputs=inputs)
 
-            # 3. Extraemos el Pydantic (Estructurado)
             structured_plan = None
             if hasattr(result, 'pydantic'):
                 structured_plan = result.pydantic
             elif hasattr(result, 'tasks_output') and len(result.tasks_output) > 0:
-                # A veces el output pydantic está en la última tarea si el kickoff global no lo pilla
                 last_task = result.tasks_output[-1]
                 if hasattr(last_task, 'pydantic'):
                     structured_plan = last_task.pydantic
 
-            # Fallback a diccionario si es necesario
             if structured_plan is None and isinstance(result, dict):
                 structured_plan = result
         
@@ -94,17 +88,12 @@ class DroneTestFlow(Flow):
         structured_plan = drone_data["structured_plan"]
         validation_passed = True
 
-        # 1. Basic Validation
         if structured_plan is None:
             print("❌ Validation failed: No structured plan generated (Pydantic object missing)")
             validation_passed = False
         else:
             print("✅ Structured plan generated successfully")
 
-            # 2. Check for Assignments (Esto depende de tu modelo Pydantic en drone_crew.py)
-            # Asumiendo que tu modelo tiene un campo 'assignments' o 'flight_paths'
-            
-            # Intentamos acceder como objeto o como diccionario
             assignments = []
             if hasattr(structured_plan, 'assignments'):
                 assignments = structured_plan.assignments
@@ -114,9 +103,7 @@ class DroneTestFlow(Flow):
             if len(assignments) > 0:
                 print(f"✅ Drone Assignments created: {len(assignments)}")
                 
-                # Validar contenido de un assignment
                 first_assign = assignments[0]
-                # Chequeo flexible (si es objeto o dict)
                 drone_id = getattr(first_assign, 'drone_id', None) or first_assign.get('drone_id')
                 path = getattr(first_assign, 'path_nodes', None) or first_assign.get('path_nodes')
                 dist = getattr(first_assign, 'total_distance', None) or first_assign.get('total_distance')
@@ -127,14 +114,12 @@ class DroneTestFlow(Flow):
                     print("⚠️ Warning: Missing critical fields in assignment data")
                     validation_passed = False
                 
-                # Chequeo de seguridad básico
-                if dist and dist > 30: # Asumiendo 30 como rango máximo de ejemplo
+                if dist and dist > 30:
                     print(f"⚠️ Warning: Drone {drone_id} has a very long path ({dist}). Check range constraints.")
             else:
                 print("⚠️ Warning: Plan generated but empty assignments list.")
                 validation_passed = False
 
-        # 3. Save Outputs
         output_dir = Path("outputs")
         output_dir.mkdir(exist_ok=True)
 
@@ -142,7 +127,6 @@ class DroneTestFlow(Flow):
         md_path = output_dir / "drone_report_test.md"
 
         try:
-            # Guardar JSON Estructurado
             json_data = {}
             if hasattr(structured_plan, 'model_dump'):
                 json_data = structured_plan.model_dump()
@@ -155,7 +139,6 @@ class DroneTestFlow(Flow):
                 json.dump(json_data, f, indent=2, default=str)
             print(f"💾 Saved JSON plan: {json_path}")
             
-            # Guardar Markdown (Raw Output del Reporter)
             with open(md_path, 'w') as f:
                 f.write(drone_data["raw_output"])
             print(f"💾 Saved Markdown report: {md_path}")
@@ -178,8 +161,7 @@ class DroneTestFlow(Flow):
         print("\n=== 🚁 DRONE FLIGHT SUMMARY ===\n")
         
         structured_plan = drone_data["structured_plan"]
-        
-        # Recuperar asignaciones de nuevo para mostrar
+
         assignments = []
         if hasattr(structured_plan, 'assignments'):
             assignments = structured_plan.assignments
@@ -191,7 +173,6 @@ class DroneTestFlow(Flow):
             return
 
         for job in assignments:
-            # Acceso seguro a atributos
             d_id = getattr(job, 'drone_id', 'Unknown')
             tgt = getattr(job, 'target_id', 'Unknown')
             dist = getattr(job, 'total_distance', 0)

@@ -7,12 +7,11 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Type, Optional
 
-# --- 1. Schema para NodeDistanceTool (LA SOLUCIÓN AL ERROR) ---
 class NodeDistanceSchema(BaseModel):
     """Input schema for NodeDistanceTool."""
     start_node: str = Field(..., description="The starting node ID (e.g., 'N1').")
     end_node: str = Field(..., description="The ending node ID (e.g., 'N52').")
-    # Al usar Optional y default=None, Pydantic ya no dará error si el LLM no lo envía
+    # Al usar Optional y default=None no da error si no se envía
     max_range: Optional[float] = Field(None, description="The maximum range of the drone. If provided, checks if distance > range.")
 
 class DroneInfoTool(BaseTool):
@@ -21,15 +20,13 @@ class DroneInfoTool(BaseTool):
 
     def _run(self, file_path: str = None) -> str:
         try:
-            # 1. Calcular la ruta absoluta basada en este archivo
+            # Calcular la ruta absoluta basada en este archivo
             # DRONE TOOLS:  src/mars_exploration/tools/drone_tools.py
             # JSON:         src/mars_exploration/inputs/drones.json
             
-            base_path = os.path.dirname(os.path.abspath(__file__)) # Carpeta tools
-            # Subimos un nivel (..) y entramos a inputs
+            base_path = os.path.dirname(os.path.abspath(__file__))
             json_path = os.path.join(base_path, '..', 'inputs', 'drones.json')
             
-            # Normalizamos la ruta (quita los .. para que quede bonita)
             json_path = os.path.normpath(json_path)
 
             if not os.path.exists(json_path):
@@ -38,7 +35,6 @@ class DroneInfoTool(BaseTool):
             with open(json_path, 'r') as f:
                 data = json.load(f)
                 
-            # Convertimos a string
             return json.dumps(data, indent=2)
 
         except Exception as e:
@@ -48,15 +44,12 @@ class NodeDistanceTool(BaseTool):
     name: str = "Node Distance Tool"
     description: str = "Calculates shortest path between two nodes. Returns 'FAILURE' if distance > max_range. Inputs: start_node, end_node, max_range (optional)."
     
-    # ¡AQUÍ ESTÁ LA MAGIA! Vinculamos el Schema explícito
     args_schema: Type[BaseModel] = NodeDistanceSchema
 
-    # Ruta al mapa
     map_path: str = Field(default='src/mars_exploration/inputs/mars_terrain.graphml', description="Path to GraphML")
 
     def _run(self, start_node: str, end_node: str, max_range: float = None) -> str:
         try:
-            # 1. Resolver ruta del mapa automáticamente igual que el JSON
             if not os.path.exists(self.map_path):
                 base_path = os.path.dirname(os.path.abspath(__file__))
                 self.map_path = os.path.join(base_path, '..', 'inputs', 'mars_terrain.graphml')

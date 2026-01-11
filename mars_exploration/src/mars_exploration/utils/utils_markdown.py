@@ -1,4 +1,4 @@
-import datetime 
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 
@@ -10,7 +10,7 @@ def mission_crew_markdown(crew_output):
 
     md.append("# 🛰️ Mars Exploration Mission Plan\n")
     md.append(f"**Mission ID:** `{plan.mission_id}`")
-    md.append(f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}\n")
+    md.append(f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n")
     md.append("---\n")
 
     # Approved Nodes
@@ -76,7 +76,8 @@ def rover_markdown(crew_output):
     text = getattr(crew_output, "raw", str(crew_output))
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
-    out_path = "outputs/rover_operation_plan.md"
+    out_path = Path("outputs/rover_operation_plan.md")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(text, encoding="utf-8")
     print(f"Saved rover plan: {out_path}")
     return text

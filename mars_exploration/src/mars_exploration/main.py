@@ -39,8 +39,7 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
 
         result = MissionCrew().crew().kickoff(inputs=inputs)
 
-        crew_output = result.pydantic
-        mission_crew_markdown(crew_output=crew_output)
+        mission_crew_markdown(crew_output=result)
 
         self.state.mission_plan_path = "outputs/mission_plan.md"
         return result
@@ -53,7 +52,7 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         terrain_path = Path("src/mars_exploration/inputs/mars_terrain.graphml")
         rovers_path = Path("src/mars_exploration/inputs/rovers.json")
 
-        mission_plan_text = self.state.mission_plan_path.read_text(encoding="utf-8")
+        mission_plan_text = Path(self.state.mission_plan_path).read_text(encoding="utf-8")
 
         rover_steps = extract_rover_steps(mission_plan_text)
         routes_hint = build_routes_hint(terrain_path, rovers_path, rover_steps)
@@ -79,15 +78,14 @@ class MarsExplorationFlow(Flow[MarsExplorationState]):
         }
 
         result = DroneCrew().crew().kickoff(inputs=drone_inputs)
-        md_path = "outputs/"
+        report_path = Path(self.state.drone_report_path)
 
-        crew_output = result.raw if hasattr(result, 'raw') else str(result)
 
-        with open(md_path, 'w') as f:
-            f.write(crew_output)
-        print(f"💾 Saved Markdown report: {md_path}")
+        output_content = result.raw if hasattr(result, 'raw') else str(result)
 
-        Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
+        report_path.write_text(output_content, encoding="utf-8")
+
+        # Path(self.state.drone_report_path).write_text(result.raw, encoding="utf-8")
 
         return result
 
